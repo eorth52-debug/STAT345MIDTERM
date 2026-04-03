@@ -1,0 +1,233 @@
+---
+title: "STAT 345 Midterm Project"
+font: 12pt
+date: "April 3rd, 2026"
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+---
+
+> "Our offense is like the Pythagorean Theorem. There is no answer!", _Shaquille O'Neal_
+
+## The Background
+
+Your role for the midterm project is that of data analyst intern at an NBA (professional basketball) team. Your direct supervisor (also part of the analytics team) has asked you to create a data visualization to illustrate how (or if) the team's shots have changed over time. After some initial clarifying questions, your supervisor confessed that they had seen some pretty cool shot charts at http://savvastjortjoglou.com/nba-shot-sharts.html and would like to extend the ideas a bit. 
+
+Your data for the midterm project may come from a variety of sources, including the NBA directly, as well as Basketball-Reference, HoopsHype, and others. There are several ways to access the data, but perhaps the simplest is through a package. There are a few options (each with some benefits, drawbacks, and potential headaches):
+
+- `nbastatR`
+- `hoopR`
+- `AdvancedBasketballStats`
+
+Note: if you would prefer to analyze college basketball, packages exist for that too (such as `cbbdata`). If you would prefer to look into a different sport, we can investigate that as well. Please let me know in advance if you intend to go down one of these alternate routes. 
+
+
+## The Tasks
+
+1. (30 points) Produce a graphic displaying the shot locations for a particular team over several years. Some notes:
+
+   - Colors should be chosen to reflect the team, if possible.
+   - There are likely many overlaid points -- handle this by either binning these by location, or use opacity and size.
+   - Incorporate information about whether the shot was made or not (shape, color, etc.).
+   - The graphic should be well-labeled, titled, etc.
+   - Start with a graph for a single year, then extend to several years. Up to 20 years of shot data is available. Either facet these by year or animate using the years.
+   - You'll want to figure out what the coordinates mean somehow. This might be through the documentation, but could also be determined using aspects of the data itself and the dimensions of an NBA court.
+    - Put a basketball court on the background of the image (you'll need to scale it appropriately).
+    
+```{r setup, message=FALSE, warning=FALSE}
+library(tidyverse)
+bucks <- read.csv("bucks2023.csv")
+bucks2023 <- bucks %>%
+  filter(isShotAttempted == TRUE)
+bucks2023$made_flag <- ifelse(bucks2023$isShotMade, "Made", "Missed")
+```
+
+```{r}
+ggplot(bucks2023, aes(x = locationX, y = locationY)) +
+  geom_point(aes(color = made_flag), alpha = 0.3, size = 1) +
+  scale_color_manual(values = c("Made" = "#00471B", "Missed" = "#EEE1C6")) +
+  coord_fixed() +
+  labs(title = "Milwaukee Bucks Shot Distribution",
+    subtitle = "2022-2023 Season",
+    x = "",
+    y = "",
+    color = "") +
+  theme_void() +
+  theme(plot.title = element_text(size = 16, face = "bold"),
+    plot.subtitle = element_text(size = 12))
+```
+
+```{r}
+library(ggplot2)
+
+
+draw_court <- function() {
+  list(
+    geom_point(aes(x = 0, y = 0), color = "black", size = 2),
+    geom_segment(aes(x = -30, xend = 30, y = -10, yend = -10, color = "black", size=2)),
+    geom_rect(aes(xmin = -80, xmax = 80, ymin = -50, ymax = 140),
+              fill = NA, color = "black", size = 2),
+    geom_segment(aes(x = -80, xend = 80, y = 140, yend = 140, color = "black", size = 2)),
+    geom_rect(aes(xmin = -250, xmax = 250, ymin = -50, ymax = 422.5),
+              fill = NA, color = "black", size = 2))}
+```
+
+```{r}
+ggplot(bucks2023, aes(x = locationX, y = locationY)) +
+  draw_court() +
+  geom_point(aes(color = made_flag), alpha = 0.3, size = 1) +
+  scale_color_manual(values = c("Made" = "green", "Missed" = "red")) +
+  coord_fixed() + scale_x_continuous(breaks = seq(-250, 250, by = 50)) +
+scale_y_continuous(breaks = seq(0, 800, by = 50)) +
+    labs(
+  title = "Milwaukee Bucks Shot Chart",
+  subtitle = "2022-2023 Season (Coordinates Relative to Basket)",
+  x = "Horizontal Court Position (Left ↔ Right, Feet)",
+  y = "Distance from Basket (inches)",
+  color = "Shot Result") +
+  theme_minimal()
+```
+
+```{r}
+ggplot(bucks2023, aes(x = locationX, y = locationY)) +
+  stat_density_2d(aes(fill = ..level..), geom = "polygon", alpha = 0.4) +
+  coord_fixed() +
+  labs(title = "Shot Density - Milwaukee Bucks") +
+  theme_minimal()
+bucks2023$distanceShot <- sqrt(bucks2023$locationX^2 + bucks2023$locationY^2)
+bucks2023 %>%
+  ggplot(aes(x = distanceShot, fill = made_flag)) +
+  geom_histogram(binwidth = 2, alpha = 0.6, position = "identity") +
+  labs(title = "Shot Distance Distribution",
+    x = "Distance (feet)",
+    y = "Count") +
+  theme_minimal()
+```
+
+```{r}
+ggplot(bucks2023, aes(x = locationX, y = locationY)) +
+  geom_point(aes(color = made_flag), alpha = 0.3, size = 1) +
+  scale_color_manual(values = c("Made" = "#00471B", "Missed" = "#EEE1C6")) +
+  coord_fixed() +
+  labs(title = "Milwaukee Bucks Shot Distribution",
+    subtitle = "2022-2023 Season",
+    x = "",
+    y = "",
+    color = "") +
+  theme_void() +
+  theme(plot.title = element_text(size = 16, face = "bold"),
+    plot.subtitle = element_text(size = 12))
+```
+
+```{r}
+library(tidyverse)
+bucks2020 <- read.csv("bucks2020.csv")
+bucks2020 <- bucks2020 %>%
+  filter(isShotAttempted == TRUE)
+bucks2020$made_flag <- ifelse(bucks$isShotMade, "Made", "Missed")
+
+library(ggplot2)
+```
+
+```{r}
+draw_court <- function() {
+  list(
+    geom_point(aes(x = 0, y = 0), color = "black", size = 2),
+    geom_segment(aes(x = -30, xend = 30, y = -10, yend = -10, color = "black", size=2)),
+    geom_rect(aes(xmin = -80, xmax = 80, ymin = -50, ymax = 140),
+              fill = NA, color = "black", size = 2),
+    geom_segment(aes(x = -80, xend = 80, y = 140, yend = 140, color = "black", size = 2)),
+    geom_rect(aes(xmin = -250, xmax = 250, ymin = -50, ymax = 422.5),
+              fill = NA, color = "black", size = 2))}
+```
+
+
+```{r}
+ggplot(bucks2020, aes(x = locationX, y = locationY)) +
+  draw_court() +
+  geom_point(aes(color = made_flag), alpha = 0.3, size = 1) +
+  scale_color_manual(values = c("Made" = "green", "Missed" = "red")) +
+  coord_fixed() + scale_x_continuous(breaks = seq(-250, 250, by = 50)) +
+scale_y_continuous(breaks = seq(0, 800, by = 50)) +
+    labs(
+  title = "Milwaukee Bucks Shot Chart",
+  subtitle = "2019-2020 Season (Coordinates Relative to Basket)",
+  x = "Horizontal Court Position (Left ↔ Right, Feet)",
+  y = "Distance from Basket (inches)",
+  color = "Shot Result") +
+  theme_minimal()
+```
+
+```{r}
+ggplot(bucks2020, aes(x = locationX, y = locationY)) +
+  stat_density_2d(aes(fill = ..level..), geom = "polygon", alpha = 0.4) +
+  coord_fixed() +
+  labs(title = "Shot Density - Milwaukee Bucks") +
+  theme_minimal()
+```
+
+
+```{r}
+bucks2020 %>%
+  ggplot(aes(x = distanceShot, fill = made_flag)) +
+  geom_histogram(binwidth = 2, alpha = 0.6, position = "identity") +
+  labs(title = "Shot Distance Distribution",
+    x = "Distance (feet)",
+    y = "Count") +
+  theme_minimal()
+```
+    
+   
+2. (30 points) Summarize the graphic/series of graphics into a digestible, bullet-point brief report for front-office staff. Some notes:
+   - The main body of the report should be very brief -- just the graphic(s) and the bullet-pointed list of findings, which should be short and clear.
+   - Include a more detailed explanation of these bullet points, for further reading by those interested. This section should follow the bullet-point section, but should be organized similarly for reference. 
+   - Your report to the front-office shouldn't include any code.
+   - This report should be generated using RMarkdown. However, the choice of output type (Word, PDF, or HTML) is up to you (you could even make slides if you want to). 
+   
+  - Most shot attempts are either around the basket or a 3 pointer
+  - Less and less mid range shots are being taken
+  - Shots attempted closer to the basket have a higher efficiency of being made
+  
+  
+  Shot distribution patterns are relatively consistent across seasons. This shows consistency in offensive identity for the team, utilizing the same kind of shots to initiate scoring. 
+  
+  The majority of shot attempts occur either very close to the basket or beyond the three-point line. With 3 pointers accounting for more points, and shots close to the basket being made most often, teams attempt to maximize offensive output by shooting majority of these shots. 
+  
+  The clustering near the rim indicates frequent drives, layups, and close-range attempts. There are more shots near the basket compared to anything else, suggesting other basketball moves to get closer to the rim. 
+   
+3. (30 points) Write and document clean, efficient, reproducible code. Some notes:
+
+   - This code will be viewed by your direct supervisor.
+   - The code file should include your code to gather, join, and clean the data; the code to generate the graphic(s) presented; and your commentary on the results (so, a single .rmd file, or an .rmd file that sources an .r file).
+   - Your code should be clean, organized, and reproducible. Remove unnecessary/scratch/exploratory code.
+   - Your code should be well commented. In particular, any decisions or judgement calls made in the analysis process should be explained/justified. Sections of code should be identified even if not functionalized (including purpose, data/argument inputs, analysis outputs).
+   
+   
+   
+4. (10 points) Above and Beyond. Choose either option below. You are welcome to explore both, but only one is required. 
+
+  - Option 1: Explore the data a bit, and create a graphic that uses (or incorporates) different information than what was used above. Some notes:
+    - Create an additional graphic that incorporates at least one additional variable not previously used (this should add to the graphic in part 1). The additional data should be drawn from a different dataset (function call) than the original graphic used. These two (or more) datasets may need to be joined appropriately.
+    - You can either add more information to the plot above, or create a different plot. 
+     - Formatting, labelling, etc. are all important here too.
+    - Adding marginal densities or other "bells and whistles" might offer additional insight.
+    - This graphic should be included at the end of the report (after the more detailed explanations). 
+     - You should include a brief description of the graphic (highlighting the different/additional information used).
+  - Option 2: If the NBA were to incorporate a 4-point shot, where would you draw a 4-point arc? Some notes:
+    - You likely should base your decision at least partly on proportion of shots made from a given range. You might consider an expected value calculation here.
+    - Your arc can be shaped as you see fit; simple arcs are sufficient for this exploration.
+    - Provide an example of a consequence (positive or negative) if a 4-point shot was incorporated. (e.g., "my_favorite_player's season point total would increase by x%")
+    - You do not need to create a plot representing your arc, though you are welcome to do so!
+
+  
+## The Deliverables
+
+1. Upload your report and code file(s) to GitHub by 5:00pm on Friday, April 3.
+2. Submit (on Canvas) your report, code, and link to your GitHub repository by 5:00pm on Friday, April 3.
+  
+  
+  
+  
+
+
